@@ -3,21 +3,17 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.models import (
     TextSendMessage,
     ImageSendMessage,
-    ConfirmTemplate,
-    MessageAction,
     TemplateSendMessage,
-    CarouselTemplate,
-    CarouselColumn,
-    PostbackAction,
-    URIAction,
+    ButtonsTemplate,
+    MessageAction,
 )
 
 def linebot(request):
     try:
         body = request.get_data(as_text=True)
         json_data = json.loads(body)
-        line_bot_api = LineBotApi('sHu2YBno6O21jcXhCnWJzHc1lIiLsdmEuBCPbns5wl9IOrtpTMl718p+iGZ1Uk8KSdRs778JmBaW5N11eU8bQNvQ92P2IhBJS26VyvmA8jRtICO02sBE3kZkPp27AiwQQF5m0EhrLZ8l6fGwl0fRUQdB04t89/1O/w1cDnyilFU=')
-        handler = WebhookHandler('4e55f1e294a38074c4c783c721391649')
+        line_bot_api = LineBotApi('Ki9QCY0RHAbiZHh77Z9Fhk9FAUC0Vot7Qp0xj3LsU0seubuk/zh7Sq3tdDtyh9wGpggvshK2XR21Syu6Pq5htTxNSuLdZHwjn0Ltg0ZFMLBLH76qYEzj2y8d/H5nuRrSe/odVTr3O4boxUzfLvrOegdB04t89/1O/w1cDnyilFU=')
+        handler = WebhookHandler('b84c6bc475c1044fc8e86ed4efd07019')
         signature = request.headers['X-Line-Signature']
         handler.handle(body, signature)
         tk = json_data['events'][0]['replyToken']
@@ -28,19 +24,16 @@ def linebot(request):
                 line_bot_api.reply_message(tk, TextSendMessage(text=msg[1]))
             if msg[0] == 'image':
                 line_bot_api.reply_message(tk, ImageSendMessage(original_content_url=msg[1], preview_image_url=msg[1]))
-            if msg[0] == 'template':
-                buttons_template_message = buttons_template()
+            if msg[1].lower() == '#法律諮詢':
+                buttons_template_message = buttons_template_law()
                 line_bot_api.reply_message(tk, buttons_template_message)
-            if msg[0] == 'carousel':
-                carousel_template_message = carousel_template()
-                line_bot_api.reply_message(tk, carousel_template_message)
-            if msg[0] == 'Contract':
-                Contract_template_message = Contract_template()
-                line_bot_api.reply_message(tk, Contract_template_message)
+            if msg[1].lower() == '#合約':
+                buttons_template_message = buttons_template_contract()
+                line_bot_api.reply_message(tk, buttons_template_message)
         if tp == 'image':
-            line_bot_api.reply_message(tk, TextSendMessage(text='好圖給讚！'))
-    except:
-        print('error', body)
+            line_bot_api.reply_message(tk, TextSendMessage(text='恭喜您上傳了合約！'))
+    except Exception as e:
+        print('error', str(e))
     return 'OK'
 
 def reply_msg(text):
@@ -49,90 +42,60 @@ def reply_msg(text):
         '#租客管理': '開發中，敬請期待',
     }
     img_dict = {
-        '#合約': 'https://www.houseol.com.tw/Upload/Knowledge/2/K000000150_S_0.jpg',
     }
     
-    if text in msg_dict:
-        reply_msg_content = ['text', msg_dict[text.lower()]]
-    elif text in img_dict:
-        reply_msg_content = ['image', img_dict[text.lower()]]
-    elif text == '#選項':
-        reply_msg_content = ['template']  # 回傳模板消息
-    elif text == '法律諮詢':
-        reply_msg_content = ['carousel']  # 回傳 Carousel 消息
-    elif text == '合約專區':
-        reply_msg_content = ['Contract']  # 回傳 Contract 消息
-    
+    text_lower = text.lower()  # 統一轉換為小寫以進行比對
+    if text_lower in msg_dict:
+        reply_msg_content = ['text', msg_dict[text_lower]]
+    elif text_lower in img_dict:
+        reply_msg_content = ['image', img_dict[text_lower]]
     return reply_msg_content
 
-def buttons_template():
+def buttons_template_law():
     buttons_template_message = TemplateSendMessage(
-        alt_text='Carousel Button template',
-        template=ConfirmTemplate(
+        alt_text='法律諮詢',
+        template=ButtonsTemplate(
+            title='法律諮詢',
             text='以下為您提供相關服務：',
             actions=[
                 MessageAction(
-                    label='查詢合約',
-                    text='查詢合約'
+                    label='常見問題',
+                    text='查看常見問題'
                 ),
                 MessageAction(
-                    label='上傳合約',
-                    text='上傳合約'
+                    label='租屋懶人包',
+                    text='我要租屋懶人包'
+                ),
+                MessageAction(
+                    label='諮詢專區',
+                    text='我要諮詢'
                 )
             ]
         )
     )
     return buttons_template_message
 
-def carousel_template():
-    carousel_template_message = TemplateSendMessage(
-        alt_text='CarouselTemplate',
-        template=CarouselTemplate(
-            columns=[
-                CarouselColumn(
-                    title='法律諮詢',
-                    text='以下為您提供相關服務：',
-                    actions=[
-                        MessageAction(
-                            label='常見問題',
-                            text='常見問題一覽'
-                        ),
-                        MessageAction(
-                            label='租屋懶人包',
-                            text='我要租屋懶人包'
-                        ),
-                        MessageAction(
-                            label='諮詢專區',
-                            text='諮詢專區'
-                        )
-                    ]
+def buttons_template_contract():
+    buttons_template_message = TemplateSendMessage(
+        alt_text='合約相關',
+        template=ButtonsTemplate(
+            title='合約',
+            text='提供以下合約相關服務：',
+            actions=[
+                URIAction(
+                    label='合約範本',
+                    uri='https://s30.aconvert.com/convert/p3r68-cdx67/avby5-bep73.html'
+                ),
+                MessageAction(
+                    label='上傳合約',
+                    uri='https://lurl.cc/img.html'
+                ),
+                URIAction(
+                    label='查看合約',
+                    text='尚未開發'
                 )
             ]
         )
     )
-    return carousel_template_message
+    return buttons_template_message
 
-
-def Contract_template():
-    Contract_template_message = TemplateSendMessage(
-        alt_text='ContractTemplate',
-        template=CarouselTemplate(
-            columns=[
-                CarouselColumn(
-                    title='合約專區',
-                    text='以下為您提供相關服務：',
-                    actions=[
-                        MessageAction(
-                            label='查詢合約',
-                            text='查詢合約'
-                        ),
-                        MessageAction(
-                            label='上傳合約',
-                            text='上傳合約'
-                        ),
-                    ]
-                )
-            ]
-        )
-    )
-    return Contract_template_message
